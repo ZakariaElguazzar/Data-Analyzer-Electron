@@ -157,14 +157,22 @@ document.getElementById("normalizeColumnsBtn").addEventListener("click", async (
   }
 
   try {
-    df_json = await window.electronAPI.normalizeColumns(df_json);
+    // Normalize the columns through the Electron API
+    const result = await window.electronAPI.normalizeColumns(df_json);
+    
+    // Update our stored data
+    df_json = result.df_json;
+    
+    // Update the current_df_info with normalized columns from the result
+    current_df_info.columns = result.columns;
+    current_df_info.dtypes = result.dtypes;
+    
     document.getElementById("logArea").innerText = "Column names normalized successfully!";
-    // Refresh the column selector
-    const result = await window.electronAPI.loadCSV("dummy"); // This will fail but we just need to update info
-    current_df_info = result.info;
-    updateColumnSelector();
+    updateColumnSelector(); // Refresh the column selector
+    displayDatasetInfo(); // Update the displayed info
   } catch (err) {
-    document.getElementById("logArea").innerText = "Error normalizing columns: " + err;
+    console.error("Error normalizing columns:", err);
+    document.getElementById("logArea").innerText = "Error normalizing columns: " + err.message;
   }
 });
 

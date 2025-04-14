@@ -79,9 +79,22 @@ def remove_duplicates(df_json):
     return df.drop_duplicates().to_json(orient="split")
 
 def normalize_column_names(df_json):
-    df = pd.read_json(df_json, orient="split")
-    df.columns = [col.lower().replace(' ', '_') for col in df.columns]
-    return df.to_json(orient="split")
+    try:
+        df = pd.read_json(df_json, orient="split")
+        # Normalize column names
+        df.columns = [col.lower().replace(' ', '_') for col in df.columns]
+        # Return both the normalized JSON and the new column info
+        return {
+            'status': 'success',
+            'df_json': df.to_json(orient="split"),
+            'columns': list(df.columns),
+            'dtypes': {col: str(dtype) for col, dtype in df.dtypes.items()}
+        }
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': str(e)
+        }
 
 def detect_outliers(df_json, column):
     df = pd.read_json(df_json, orient="split")
@@ -223,6 +236,19 @@ if __name__ == "__main__":
             print(result)
         except Exception as e:
             print(json.dumps({"status": "error", "message": str(e)}))
+
+    elif command == "normalize_column_names" and len(sys.argv) > 2:
+        json_file_path = sys.argv[2]
+        try:
+            with open(json_file_path, 'r') as f:
+                df_json = f.read()
+            result = normalize_column_names(df_json)
+            print(json.dumps(result, default=json_serializable))
+        except Exception as e:
+            print(json.dumps({
+                "status": "error",
+                "message": str(e)
+            }))
         
     # Add other commands in a similar pattern
     elif command == "export_data" and len(sys.argv) > 3:
