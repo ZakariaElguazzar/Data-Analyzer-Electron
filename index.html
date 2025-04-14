@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modern Data Analyzer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">Data Analyzer</h1>
+    
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="data-loading">Data Loading</button>
+      <button class="tab-btn" data-tab="data-cleaning">Data Cleaning</button>
+      <button class="tab-btn" data-tab="data-analysis">Analysis</button>
+      <button class="tab-btn" data-tab="visualization">Visualization</button>
+    </div>
+    
+    <div id="data-loading" class="tab-content active">
+      <button id="loadCSVBtn" class="btn load-btn">Load CSV</button>
+      <div class="info-section">
+        <h3>Dataset Info</h3>
+        <div id="datasetInfo"></div>
+      </div>
+    </div>
+    
+    <div id="data-cleaning" class="tab-content">
+      <div class="form-group">
+        <label>Handle Missing Values:</label>
+        <select id="missingValuesMethod">
+          <option value="drop">Drop rows</option>
+          <option value="ffill">Forward fill</option>
+          <option value="bfill">Backward fill</option>
+          <option value="mean">Fill with mean</option>
+        </select>
+        <button id="handleMissingBtn" class="btn clean-btn">Apply</button>
+      </div>
+      
+      <div class="form-group">
+        <button id="removeDuplicatesBtn" class="btn clean-btn">Remove Duplicates</button>
+      </div>
+      
+      <div class="form-group">
+        <button id="normalizeColumnsBtn" class="btn clean-btn">Normalize Column Names</button>
+      </div>
+    </div>
+    
+    <div id="data-analysis" class="tab-content">
+      <div class="form-group">
+        <button id="showStatsBtn" class="btn stats-btn">Show Descriptive Stats</button>
+        <div id="statsResults"></div>
+      </div>
+      
+      <div class="form-group">
+        <button id="runPCABtn" class="btn stats-btn">Run PCA</button>
+        <div id="pcaResults"></div>
+      </div>
+      
+      <div class="form-group">
+        <label>Number of Clusters:</label>
+        <input type="number" id="numClusters" value="3" min="2" max="10">
+        <button id="runKMeansBtn" class="btn stats-btn">Run KMeans</button>
+        <div id="kmeansResults"></div>
+      </div>
+    </div>
+    
+    <div id="visualization" class="tab-content">
+      <div class="form-group">
+        <label>Select Column for Outlier Detection:</label>
+        <select id="outlierColumn"></select>
+        <button id="detectOutliersBtn" class="btn viz-btn">Show Outliers</button>
+        <div id="outlierPlot"></div>
+      </div>
+      
+      <div class="form-group">
+        <button id="showCorrelationBtn" class="btn viz-btn">Show Correlation Matrix</button>
+        <div id="correlationPlot"></div>
+      </div>
+      
+      <div class="form-group">
+        <button id="exportDataBtn" class="btn export-btn">Export Data</button>
+      </div>
+    </div>
+    
+    <div id="logArea" class="log-area"></div>
+    <button id="toggleLangBtn" class="btn lang-btn">Switch to French</button>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

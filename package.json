@@ -1,0 +1,14 @@
+{
+  "name": "data-analyzer-electron",
+  "version": "1.0.0",
+  "description": "Data Analyzer App with Electron and Python",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^latest-version"
+  },
+  "dependencies": {}
+}
+
