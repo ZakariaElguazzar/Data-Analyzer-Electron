@@ -127,14 +127,35 @@ def detect_outliers(df_json, column):
         })
 
 def visualize_correlation(df_json):
-    df = pd.read_json(df_json, orient="split")
-    numeric_cols = df.select_dtypes(include=np.number).columns
-    plt.figure(figsize=(10, 8))
-    sns.heatmap(df[numeric_cols].corr(), annot=True, cmap='coolwarm')
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    return base64.b64encode(buf.read()).decode('utf-8')
+    try:
+        df = pd.read_json(df_json, orient="split")
+        numeric_cols = df.select_dtypes(include=np.number).columns
+        
+        if len(numeric_cols) < 2:
+            return json.dumps({
+                'status': 'error',
+                'message': 'Need at least 2 numeric columns for correlation matrix'
+            })
+        
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(df[numeric_cols].corr(), annot=True, cmap='coolwarm', fmt=".2f")
+        plt.title('Correlation Matrix')
+        
+        # Save plot to bytes
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+        plt.close()
+        buf.seek(0)
+        
+        return json.dumps({
+            'status': 'success',
+            'plot': base64.b64encode(buf.read()).decode('utf-8')
+        })
+    except Exception as e:
+        return json.dumps({
+            'status': 'error',
+            'message': str(e)
+        })
 
 def run_pca(df_json):
     df = pd.read_json(df_json, orient="split")
@@ -334,6 +355,19 @@ if __name__ == "__main__":
             with open(json_file_path, 'r') as f:
                 df_json = f.read()
             result = export_data(df_json, file_path)
+            print(result)
+        except Exception as e:
+            print(json.dumps({
+                "status": "error",
+                "message": str(e)
+            }))
+
+    elif command == "visualize_correlation" and len(sys.argv) > 2:
+        json_file_path = sys.argv[2]
+        try:
+            with open(json_file_path, 'r') as f:
+                df_json = f.read()
+            result = visualize_correlation(df_json)
             print(result)
         except Exception as e:
             print(json.dumps({

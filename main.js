@@ -286,9 +286,33 @@ ipcMain.handle('detect-outliers', async (event, df_json, column) => {
 
 ipcMain.handle('visualize-correlation', async (event, df_json) => {
   return new Promise((resolve, reject) => {
-    exec(`python data_analyzer.py visualize_correlation "${df_json}"`, (error, stdout, stderr) => {
-      if (error) reject(`Error: ${stderr}`);
-      resolve(stdout);
+    // Create a temporary file for the data
+    const tempFile = path.join(app.getPath('temp'), `corr_data_${Date.now()}.json`);
+    fs.writeFileSync(tempFile, df_json);
+    
+    exec(`python data_analyzer.py visualize_correlation "${tempFile}"`, (error, stdout, stderr) => {
+      // Clean up temp file
+      try {
+        fs.unlinkSync(tempFile);
+      } catch (e) {
+        console.error('Failed to delete temp file:', e);
+      }
+      
+      if (error) {
+        reject(`Error: ${stderr}`);
+        return;
+      }
+      
+      try {
+        const result = JSON.parse(stdout.trim());
+        if (result.status === 'error') {
+          reject(result.message);
+        } else {
+          resolve(result);
+        }
+      } catch (parseError) {
+        reject(`Error parsing output: ${parseError.message}`);
+      }
     });
   });
 });

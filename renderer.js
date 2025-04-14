@@ -75,11 +75,9 @@ function displayDatasetInfo() {
     <ul>
   `;
   
-  // Add missing values information
+  // Add missing values information - now showing all columns
   for (const [col, count] of Object.entries(current_df_info.missing)) {
-    if (count > 0) {
-      infoHTML += `<li>${col}: ${count}</li>`;
-    }
+    infoHTML += `<li>${col}: ${count}</li>`;  // Removed the if(count > 0) condition
   }
   
   infoHTML += `
@@ -93,8 +91,6 @@ function displayDatasetInfo() {
   for (const [col, dtype] of Object.entries(current_df_info.dtypes)) {
     infoHTML += `<li>${col}: ${dtype}</li>`;
   }
-  
-  infoHTML += `</ul>`;
   
   infoDiv.innerHTML = infoHTML;
 }
@@ -319,16 +315,26 @@ document.getElementById("showCorrelationBtn").addEventListener("click", async ()
   }
 
   try {
-    const plot = await window.electronAPI.visualizeCorrelation(df_json);
+    document.getElementById("logArea").innerText = "Generating correlation matrix...";
+    const result = await window.electronAPI.visualizeCorrelation(df_json);
+    
+    if (result.status === 'error') {
+      throw new Error(result.message);
+    }
+
     const correlationDiv = document.getElementById("correlationPlot");
     correlationDiv.innerHTML = `
       <h4>Correlation Matrix</h4>
-      <div class="plot-container">
-        <img src="data:image/png;base64,${plot}" alt="Correlation Plot">
+      <div class="plot-container" style="width: 100%; max-width: 800px; margin: 0 auto;">
+        <img src="data:image/png;base64,${result.plot}" 
+             alt="Correlation Plot" 
+             style="width: 100%; height: auto;">
       </div>
     `;
+    document.getElementById("logArea").innerText = "Correlation matrix generated!";
   } catch (err) {
-    document.getElementById("logArea").innerText = "Error showing correlation: " + err;
+    console.error("Error showing correlation:", err);
+    document.getElementById("logArea").innerText = "Error showing correlation: " + err.message;
   }
 });
 
@@ -355,15 +361,5 @@ document.getElementById("exportDataBtn").addEventListener("click", async () => {
   } catch (err) {
     console.error("Export error details:", err);
     document.getElementById("logArea").innerText = "Error exporting data: " + err;
-  }
-});
-
-// Toggle language button remains the same
-document.getElementById("toggleLangBtn").addEventListener("click", () => {
-  const currentLang = document.getElementById("toggleLangBtn").innerText;
-  if (currentLang === "Switch to French") {
-    document.getElementById("toggleLangBtn").innerText = "Switch to English";
-  } else {
-    document.getElementById("toggleLangBtn").innerText = "Switch to French";
   }
 });
