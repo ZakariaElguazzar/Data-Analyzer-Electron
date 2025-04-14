@@ -224,18 +224,28 @@ document.getElementById("runPCABtn").addEventListener("click", async () => {
   }
 
   try {
+    document.getElementById("logArea").innerText = "Running PCA...";
     const result = await window.electronAPI.runPCA(df_json);
+    
+    if (result.status === 'error') {
+      throw new Error(result.message);
+    }
+
     const pcaDiv = document.getElementById("pcaResults");
     pcaDiv.innerHTML = `
       <h4>PCA Results</h4>
       <p>Explained Variance: PC1: ${(result.explained_variance[0] * 100).toFixed(2)}%, 
          PC2: ${(result.explained_variance[1] * 100).toFixed(2)}%</p>
-      <div class="plot-container">
-        <img src="data:image/png;base64,${result.plot}" alt="PCA Plot">
+      <div class="plot-container" style="width: 100%; max-width: 800px; margin: 0 auto;">
+        <img src="data:image/png;base64,${result.plot}" 
+             alt="PCA Plot" 
+             style="width: 100%; height: auto;">
       </div>
     `;
+    document.getElementById("logArea").innerText = "PCA completed!";
   } catch (err) {
-    document.getElementById("logArea").innerText = "Error running PCA: " + err;
+    console.error("Error running PCA:", err);
+    document.getElementById("logArea").innerText = "Error running PCA: " + err.message;
   }
 });
 
@@ -247,16 +257,26 @@ document.getElementById("runKMeansBtn").addEventListener("click", async () => {
 
   const numClusters = document.getElementById("numClusters").value;
   try {
+    document.getElementById("logArea").innerText = "Running KMeans clustering...";
     const result = await window.electronAPI.runKMeans(df_json, numClusters);
+    
+    if (result.status === 'error') {
+      throw new Error(result.message);
+    }
+
     const kmeansDiv = document.getElementById("kmeansResults");
     kmeansDiv.innerHTML = `
       <h4>KMeans Clustering (${numClusters} clusters)</h4>
-      <div class="plot-container">
-        <img src="data:image/png;base64,${result.plot}" alt="KMeans Plot">
+      <div class="plot-container" style="width: 100%; max-width: 800px; margin: 0 auto;">
+        <img src="data:image/png;base64,${result.plot}" 
+             alt="KMeans Plot" 
+             style="width: 100%; height: auto;">
       </div>
     `;
+    document.getElementById("logArea").innerText = "KMeans clustering completed!";
   } catch (err) {
-    document.getElementById("logArea").innerText = "Error running KMeans: " + err;
+    console.error("Error running KMeans:", err);
+    document.getElementById("logArea").innerText = "Error running KMeans: " + err.message;
   }
 });
 

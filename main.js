@@ -92,15 +92,30 @@ ipcMain.handle('show-open-dialog', async (event, options) => {
 
 ipcMain.handle('run-pca', async (event, df_json) => {
   return new Promise((resolve, reject) => {
-    exec(`python data_analyzer.py run_pca "${df_json}"`, (error, stdout, stderr) => {
+    // Create a temporary file for the data
+    const tempFile = path.join(app.getPath('temp'), `pca_data_${Date.now()}.json`);
+    fs.writeFileSync(tempFile, df_json);
+    
+    exec(`python data_analyzer.py run_pca "${tempFile}"`, (error, stdout, stderr) => {
+      // Clean up temp file
+      try {
+        fs.unlinkSync(tempFile);
+      } catch (e) {
+        console.error('Failed to delete temp file:', e);
+      }
+      
       if (error) {
         reject(`Error: ${stderr}`);
         return;
       }
       
       try {
-        const trimmedOutput = stdout.trim();
-        resolve(trimmedOutput);
+        const result = JSON.parse(stdout.trim());
+        if (result.status === 'error') {
+          reject(result.message);
+        } else {
+          resolve(result);
+        }
       } catch (parseError) {
         reject(`Error parsing output: ${parseError.message}`);
       }
@@ -110,11 +125,33 @@ ipcMain.handle('run-pca', async (event, df_json) => {
 
 ipcMain.handle('run-kmeans', async (event, df_json, num_clusters) => {
   return new Promise((resolve, reject) => {
-    exec(`python data_analyzer.py run_kmeans "${df_json}" ${num_clusters}`, (error, stdout, stderr) => {
+    // Create a temporary file for the data
+    const tempFile = path.join(app.getPath('temp'), `kmeans_data_${Date.now()}.json`);
+    fs.writeFileSync(tempFile, df_json);
+    
+    exec(`python data_analyzer.py run_kmeans "${tempFile}" ${num_clusters}`, (error, stdout, stderr) => {
+      // Clean up temp file
+      try {
+        fs.unlinkSync(tempFile);
+      } catch (e) {
+        console.error('Failed to delete temp file:', e);
+      }
+      
       if (error) {
         reject(`Error: ${stderr}`);
+        return;
       }
-      resolve(stdout);
+      
+      try {
+        const result = JSON.parse(stdout.trim());
+        if (result.status === 'error') {
+          reject(result.message);
+        } else {
+          resolve(result);
+        }
+      } catch (parseError) {
+        reject(`Error parsing output: ${parseError.message}`);
+      }
     });
   });
 });

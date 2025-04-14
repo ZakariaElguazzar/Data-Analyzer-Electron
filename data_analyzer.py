@@ -118,31 +118,49 @@ def visualize_correlation(df_json):
 def run_pca(df_json):
     df = pd.read_json(df_json, orient="split")
     numeric_data = df.select_dtypes(include=np.number).dropna()
+    
+    if len(numeric_data.columns) < 2:
+        return json.dumps({
+            'status': 'error',
+            'message': 'Need at least 2 numeric columns for PCA'
+        })
+    
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(numeric_data)
     pca = PCA(n_components=2)
     transformed = pca.fit_transform(scaled_data)
     
     # Create scatter plot
-    plt.figure()
+    plt.figure(figsize=(8, 6))
     plt.scatter(transformed[:, 0], transformed[:, 1])
     plt.xlabel('PC1')
     plt.ylabel('PC2')
     plt.title('PCA Results')
+    
+    # Save plot to bytes
     buf = io.BytesIO()
-    plt.savefig(buf, format='png')
+    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+    plt.close()
     buf.seek(0)
     plot_base64 = base64.b64encode(buf.read()).decode('utf-8')
     
-    return {
+    return json.dumps({
+        'status': 'success',
         'transformed': transformed.tolist(),
         'explained_variance': pca.explained_variance_ratio_.tolist(),
         'plot': plot_base64
-    }
+    })
 
 def run_kmeans(df_json, num_clusters):
     df = pd.read_json(df_json, orient="split")
     numeric_data = df.select_dtypes(include=np.number).dropna()
+    
+    if len(numeric_data.columns) < 2:
+        return json.dumps({
+            'status': 'error',
+            'message': 'Need at least 2 numeric columns for KMeans visualization'
+        })
+    
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(numeric_data)
     
@@ -151,18 +169,28 @@ def run_kmeans(df_json, num_clusters):
     labels = kmeans.labels_
     
     # Create cluster visualization
-    plt.figure()
-    sns.scatterplot(x=scaled_data[:, 0], y=scaled_data[:, 1], hue=labels, palette='viridis')
-    plt.title('KMeans Clustering Results')
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    plot_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    plt.figure(figsize=(8, 6))
+    scatter = sns.scatterplot(
+        x=scaled_data[:, 0], 
+        y=scaled_data[:, 1], 
+        hue=labels, 
+        palette='viridis',
+        legend=False
+    )
+    plt.title(f'KMeans Clustering ({num_clusters} clusters)')
+    plt.xlabel('Feature 1 (Standardized)')
+    plt.ylabel('Feature 2 (Standardized)')
     
-    return {
-        'labels': labels.tolist(),
-        'plot': plot_base64
-    }
+    # Save plot to bytes
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+    plt.close()  # Important: close the figure to free memory
+    buf.seek(0)
+    
+    return json.dumps({
+        'status': 'success',
+        'plot': base64.b64encode(buf.read()).decode('utf-8')
+    })
 
 def export_data(df_json, file_path):
     try:
@@ -216,6 +244,19 @@ if __name__ == "__main__":
             df_json = f.read()
         stats = get_stats(df_json)
         print(json.dumps(stats, default=json_serializable))
+    
+    elif command == "run_pca" and len(sys.argv) > 2:
+        json_file_path = sys.argv[2]
+        try:
+            with open(json_file_path, 'r') as f:
+                df_json = f.read()
+            result = run_pca(df_json)
+            print(result)  # This is already JSON string from run_pca function
+        except Exception as e:
+            print(json.dumps({
+                "status": "error",
+                "message": str(e)
+            }))
         
     # Add handlers for other commands
     elif command == "handle_missing_values" and len(sys.argv) > 3:
@@ -244,6 +285,20 @@ if __name__ == "__main__":
                 df_json = f.read()
             result = normalize_column_names(df_json)
             print(json.dumps(result, default=json_serializable))
+        except Exception as e:
+            print(json.dumps({
+                "status": "error",
+                "message": str(e)
+            }))
+
+    elif command == "run_kmeans" and len(sys.argv) > 3:
+        json_file_path = sys.argv[2]
+        num_clusters = sys.argv[3]
+        try:
+            with open(json_file_path, 'r') as f:
+                df_json = f.read()
+            result = run_kmeans(df_json, num_clusters)
+            print(result)  # This is already JSON string from run_kmeans function
         except Exception as e:
             print(json.dumps({
                 "status": "error",

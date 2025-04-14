@@ -111,7 +111,7 @@ body {
 }
 
 select, input[type="number"] {
-  width: 10%;
+  width: 20%;
   padding: 12px 15px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -264,4 +264,16 @@ select:focus, input[type="number"]:focus {
 
 .btn:active {
   animation: pulse 0.3s ease;
+}
+
+.plot-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.plot-container img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
