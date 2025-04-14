@@ -289,16 +289,26 @@ document.getElementById("detectOutliersBtn").addEventListener("click", async () 
 
   const column = document.getElementById("outlierColumn").value;
   try {
-    const plot = await window.electronAPI.detectOutliers(df_json, column);
+    document.getElementById("logArea").innerText = `Detecting outliers for ${column}...`;
+    const result = await window.electronAPI.detectOutliers(df_json, column);
+    
+    if (result.status === 'error') {
+      throw new Error(result.message);
+    }
+
     const outlierDiv = document.getElementById("outlierPlot");
     outlierDiv.innerHTML = `
       <h4>Outlier Detection for ${column}</h4>
-      <div class="plot-container">
-        <img src="data:image/png;base64,${plot}" alt="Outlier Plot">
+      <div class="plot-container" style="width: 100%; max-width: 800px; margin: 0 auto;">
+        <img src="data:image/png;base64,${result.plot}" 
+             alt="Outlier Plot" 
+             style="width: 100%; height: auto;">
       </div>
     `;
+    document.getElementById("logArea").innerText = `Outlier detection completed for ${column}!`;
   } catch (err) {
-    document.getElementById("logArea").innerText = "Error detecting outliers: " + err;
+    console.error("Error detecting outliers:", err);
+    document.getElementById("logArea").innerText = "Error detecting outliers: " + err.message;
   }
 });
 

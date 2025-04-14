@@ -97,13 +97,34 @@ def normalize_column_names(df_json):
         }
 
 def detect_outliers(df_json, column):
-    df = pd.read_json(df_json, orient="split")
-    plt.figure()
-    sns.boxplot(data=df[column])
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png')
-    buf.seek(0)
-    return base64.b64encode(buf.read()).decode('utf-8')
+    try:
+        df = pd.read_json(df_json, orient="split")
+        
+        if column not in df.columns:
+            return json.dumps({
+                'status': 'error',
+                'message': f'Column "{column}" not found in dataset'
+            })
+        
+        plt.figure(figsize=(8, 6))
+        sns.boxplot(data=df[column])
+        plt.title(f'Outlier Detection for {column}')
+        
+        # Save plot to bytes
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+        plt.close()
+        buf.seek(0)
+        
+        return json.dumps({
+            'status': 'success',
+            'plot': base64.b64encode(buf.read()).decode('utf-8')
+        })
+    except Exception as e:
+        return json.dumps({
+            'status': 'error',
+            'message': str(e)
+        })
 
 def visualize_correlation(df_json):
     df = pd.read_json(df_json, orient="split")
@@ -313,6 +334,19 @@ if __name__ == "__main__":
             with open(json_file_path, 'r') as f:
                 df_json = f.read()
             result = export_data(df_json, file_path)
+            print(result)
+        except Exception as e:
+            print(json.dumps({
+                "status": "error",
+                "message": str(e)
+            }))
+    elif command == "detect_outliers" and len(sys.argv) > 3:
+        json_file_path = sys.argv[2]
+        column = sys.argv[3]
+        try:
+            with open(json_file_path, 'r') as f:
+                df_json = f.read()
+            result = detect_outliers(df_json, column)
             print(result)
         except Exception as e:
             print(json.dumps({
